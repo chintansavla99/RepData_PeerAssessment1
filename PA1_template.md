@@ -4,22 +4,24 @@ output:
   html_document:
     keep_md: true
 ---
-```{r results='hide',message=FALSE}
+
+```r
 knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
 library(qdapTools)
 library(dplyr)
-
 ```
 
 ## Loading and preprocessing the data
-```{r cache=TRUE}
+
+```r
 zipF<-"activity.zip"
 outDir<-getwd()
 unzip(zipF,exdir = outDir)
 dat1<-read.csv("activity.csv")
 ```
 Removing NA's from the dataset
-```{r cache=TRUE}
+
+```r
 logi<-complete.cases(dat1)
 dat<-dat1[logi,]
 
@@ -27,7 +29,8 @@ dat$date<-as.Date(dat$date,"%Y-%m-%d")
 ```
 
 ## What is mean total number of steps taken per day?
-```{r cache=TRUE}
+
+```r
 totalpd<-tapply(dat$steps, dat$date, sum)
 library(qdapTools)
 totalpd<-list2df(as.list(totalpd),col1 = "TotalSteps",col2 = "Date")
@@ -35,45 +38,69 @@ totalpd$Date<-as.Date(totalpd$Date,"%Y-%m-%d")
 library(ggplot2)
 p<-ggplot(totalpd,aes(x=Date,y=TotalSteps))
 p+geom_histogram(stat = "identity")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+```r
 meanpd<-round(mean(totalpd$TotalSteps),digits = 2)
 
 medianpd<-median(totalpd$TotalSteps)
-
-
-
-
-
 ```
-Mean steps taken per day are `r meanpd` and Median is `r medianpd`  
+Mean steps taken per day are 1.076619\times 10^{4} and Median is 10765  
 
 ## What is the average daily activity pattern?
 
-```{r}
 
+```r
 meanst<-tapply(dat$steps, dat$interval, mean)
 
 meanst<-list2df(as.list(meanst),col1 = "Steps",col2 = "Interval")
 plot(meanst$Interval,meanst$Steps,type = "l",xlab = "Intervals",ylab = "Average Steps")
-maximum=select(filter(meanst, Steps==max(Steps)),Interval)
-
-
 ```
-Average maximum number of Steps are in `r maximum` Interval  
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+```r
+maximum=select(filter(meanst, Steps==max(Steps)),Interval)
+```
+Average maximum number of Steps are in 835 Interval  
 
 ## Imputing missing values  
 If we run the below we can conclude that NA's are present only in the steps column. 
-```{r}
+
+```r
 all(!is.na(dat1$date))
-all(!is.na(dat1$interval))
-all(!is.na(dat1$steps))
-totalna<-table(is.na(dat1$steps))[[2]]
+```
 
 ```
-Total Number of NA's are `r totalna`  
+## [1] TRUE
+```
+
+```r
+all(!is.na(dat1$interval))
+```
+
+```
+## [1] TRUE
+```
+
+```r
+all(!is.na(dat1$steps))
+```
+
+```
+## [1] FALSE
+```
+
+```r
+totalna<-table(is.na(dat1$steps))[[2]]
+```
+Total Number of NA's are 2304  
 
 Now we replace the NA's with the mean value of the interval which we have already calculated earlier
-```{r}
+
+```r
 for (i in 1:17568) {
     if(is.na(dat1[i,1])){
         dat1[i,1]<-select(filter(meanst,Interval==as.character(dat1[i,3])),Steps)
@@ -82,7 +109,8 @@ for (i in 1:17568) {
 }
 ```
 Plotting the histogram for new data
-```{r}
+
+```r
 totalnpd<-tapply(dat1$steps, dat1$date, sum)
 
 totalnpd<-list2df(as.list(totalnpd),col1 = "TotalSteps",col2 = "Date")
@@ -90,18 +118,20 @@ totalnpd$Date<-as.Date(totalnpd$Date,"%Y-%m-%d")
 library(ggplot2)
 q<-ggplot(totalnpd,aes(x=Date,y=TotalSteps))
 q+geom_histogram(stat = "identity")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+```r
 meannnpd<-ceiling(mean(totalnpd$TotalSteps))
 
 mediannpd<-ceiling(median(totalnpd$TotalSteps))
-
-
-
 ```
-Mean is `r meannnpd` and Median is `r mediannpd`. As we have replaced the NA's with mean there isn't any difference in the Mean value.  
+Mean is 1.0767\times 10^{4} and Median is 1.0767\times 10^{4}. As we have replaced the NA's with mean there isn't any difference in the Mean value.  
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r}
+
+```r
 dat1$date<-as.Date(dat1$date,"%Y-%m-%d")
 
 new<-weekdays(dat1$date)
@@ -127,6 +157,8 @@ dat1<-rename(dat1,Mean=Steps)
 r<-ggplot(dat1,aes(interval,Mean))
 r+geom_line()+facet_wrap(~typ,ncol=1)
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 
 
